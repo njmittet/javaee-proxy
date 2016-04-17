@@ -20,6 +20,7 @@ public class ProxyController {
 
     private static final Logger log = Logger.getLogger(ProxyController.class.getName());
 
+    // TODO Move to application.properties
     private static final String QUERY_PARAM_IDENTIFIER = "?";
     private static final String QUERY_PARAM_DELIMITER = "&";
     private static final String KEY_VALUE_DELIMITER = "=";
@@ -30,9 +31,9 @@ public class ProxyController {
     private static final String DEFAULT_PORT = "8080";
 
     @GET
-    @Path("/{path: .*}")
+    @Path("/{path:.*}")
     @Produces("application/json")
-    public Response proxyGetRequest(@Context UriInfo uriInfo) {
+    public Response proxyRequest(@Context UriInfo uriInfo) {
         ResteasyClient client = new ResteasyClientBuilder().build();
         ResteasyWebTarget target = client.target(buildProxyUrl(uriInfo));
         Response response = target.request()
