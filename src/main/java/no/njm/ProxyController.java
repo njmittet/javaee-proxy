@@ -1,11 +1,11 @@
 package no.njm;
 
-import org.jboss.logging.Logger;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
@@ -18,9 +18,6 @@ import java.util.List;
 @Path("/proxy")
 public class ProxyController {
 
-    private static final Logger log = Logger.getLogger(ProxyController.class.getName());
-
-    // TODO Move to application.properties
     private static final String QUERY_PARAM_IDENTIFIER = "?";
     private static final String QUERY_PARAM_DELIMITER = "&";
     private static final String KEY_VALUE_DELIMITER = "=";
@@ -29,16 +26,19 @@ public class ProxyController {
     private static final String CREDENTIALS = "Basic username:password";
     private static final String DEFAULT_HOST = "localhost";
     private static final String DEFAULT_PORT = "8080";
+    private static final String CONTEXT_PATH = "/";
+    private static final String ACCEPT_XML = "application/xml";
+    private static final String ACCEPT_JSON = "application/json";
 
     @GET
     @Path("/{path:.*}")
-    @Produces("application/json")
-    public Response proxyRequest(@Context UriInfo uriInfo) {
+    @Produces({"application/xml", "application/json"})
+    public Response proxy(@Context UriInfo uriInfo, @HeaderParam("Accept") String acceptHeader) {
         ResteasyClient client = new ResteasyClientBuilder().build();
         ResteasyWebTarget target = client.target(buildProxyUrl(uriInfo));
         Response response = target.request()
                                   .header("Authorization", CREDENTIALS)
-                                  .accept("application/json")
+                                  .accept(defaultAcceptHeader(acceptHeader))
                                   .get();
         if (responseStatusOK(response)) {
             return Response.ok(response.readEntity(String.class)).build();
@@ -61,7 +61,7 @@ public class ProxyController {
                 .append(resolveProxyHost())
                 .append(":")
                 .append(resolveProxyPort())
-                .append("/")
+                .append(CONTEXT_PATH)
                 .append(requestPath(uriInfo.getPathParameters()))
                 .append(requestQueryParameters(uriInfo.getQueryParameters()))
                 .toString();
@@ -101,6 +101,13 @@ public class ProxyController {
         List<String> keyValues = new ArrayList<>();
         values.forEach(value -> keyValues.add(key + KEY_VALUE_DELIMITER + value));
         return String.join(QUERY_PARAM_DELIMITER, keyValues);
+    }
+
+    private String defaultAcceptHeader(String acceptHeader) {
+        if (acceptHeader.equals(ACCEPT_XML) || acceptHeader.equals(ACCEPT_JSON)) {
+            return acceptHeader;
+        }
+        return ACCEPT_XML;
     }
 }
 
