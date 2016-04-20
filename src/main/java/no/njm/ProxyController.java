@@ -6,8 +6,10 @@ import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -22,8 +24,8 @@ public class ProxyController {
     private static final String DEFAULT_HOST = "localhost";
     private static final String DEFAULT_PORT = "9000";
     private static final String CONTEXT_PATH = "/";
-    private static final String ACCEPT_XML = "application/xml";
-    private static final String ACCEPT_JSON = "application/json";
+    private static final String APPLICATION_XML = "application/xml";
+    private static final String APPLICATION_JSON = "application/json";
 
     @GET
     @Path("/{path:.*}")
@@ -35,6 +37,23 @@ public class ProxyController {
         Response response = target.request()
                                   .accept(defaultAcceptHeader(acceptHeader))
                                   .get();
+        return Response.status(response.getStatus())
+                       .entity(response.readEntity(String.class))
+                       .build();
+    }
+
+    @POST
+    @Path("/{path:.*}")
+    @Produces({"application/xml", "application/json"})
+    public Response proxy(@Context UriInfo uriInfo,
+                          @HeaderParam("Accept") String acceptHeader,
+                          @HeaderParam("Content-type") String contentType,
+                          String body) {
+        ResteasyClient client = new ResteasyClientBuilder().build();
+        ResteasyWebTarget target = client.target(buildUrl(uriInfo));
+        Response response = target.request()
+                                  .accept(defaultAcceptHeader(acceptHeader))
+                                  .post(Entity.entity(body, defaultContentType(contentType)));
         return Response.status(response.getStatus())
                        .entity(response.readEntity(String.class))
                        .build();
@@ -90,10 +109,17 @@ public class ProxyController {
     }
 
     private String defaultAcceptHeader(String acceptHeader) {
-        if (acceptHeader.equals(ACCEPT_XML) || acceptHeader.equals(ACCEPT_JSON)) {
+        if (acceptHeader.equals(APPLICATION_XML) || acceptHeader.equals(APPLICATION_JSON)) {
             return acceptHeader;
         }
-        return ACCEPT_XML;
+        return APPLICATION_XML;
+    }
+
+    private String defaultContentType(String contentType) {
+        if (contentType.equals(APPLICATION_XML) || contentType.equals(APPLICATION_JSON)) {
+            return contentType;
+        }
+        return APPLICATION_XML;
     }
 }
 
