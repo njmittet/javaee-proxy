@@ -62,16 +62,16 @@ public class ProxyController {
     private String buildUrl(UriInfo uriInfo) {
         return new StringBuilder()
                 .append("http://")
-                .append(backendHost())
+                .append(defaultHost())
                 .append(":")
-                .append(backendPort())
+                .append(defaultPort())
                 .append(CONTEXT_PATH)
                 .append(requestPath(uriInfo.getPathParameters()))
                 .append(queryParameters(uriInfo.getQueryParameters()))
                 .toString();
     }
 
-    private String backendHost() {
+    private String defaultHost() {
         String host = System.getenv("PROXY_HOST");
         if (host != null && !host.isEmpty()) {
             return host;
@@ -79,7 +79,7 @@ public class ProxyController {
         return DEFAULT_HOST;
     }
 
-    private String backendPort() {
+    private String defaultPort() {
         String port = System.getenv("PROXY_PORT");
         if (port != null && !port.isEmpty()) {
             return port;
