@@ -4,6 +4,7 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -16,6 +17,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.List;
+import org.jboss.logging.Logger;
 
 @Path("/proxy")
 public class ProxyController {
@@ -26,6 +28,9 @@ public class ProxyController {
     private static final String CONTEXT_PATH = "/";
     private static final String APPLICATION_XML = "application/xml";
     private static final String APPLICATION_JSON = "application/json";
+
+    @Inject
+    private Logger logger;
 
     @GET
     @Path("/{path:.*}")
