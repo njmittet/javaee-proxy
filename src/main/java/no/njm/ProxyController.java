@@ -34,12 +34,10 @@ public class ProxyController {
                           @HeaderParam("Accept") String acceptHeader) {
         ResteasyClient client = new ResteasyClientBuilder().build();
         ResteasyWebTarget target = client.target(buildUrl(uriInfo));
-        Response response = target.request()
+        Response backendResponse = target.request()
                                   .accept(acceptHeader)
                                   .get();
-        return Response.status(response.getStatus())
-                       .entity(response.readEntity(String.class))
-                       .build();
+        return createReponse(backendResponse);
     }
 
     @POST
@@ -52,9 +50,13 @@ public class ProxyController {
                           String body) {
         ResteasyClient client = new ResteasyClientBuilder().build();
         ResteasyWebTarget target = client.target(buildUrl(uriInfo));
-        Response response = target.request()
+        Response backendResponse = target.request()
                                   .accept(acceptHeader)
                                   .post(Entity.entity(body, contentType));
+        return createReponse(backendResponse);
+    }
+
+    private Response createReponse(Response response) {
         return Response.status(response.getStatus())
                        .entity(response.readEntity(String.class))
                        .build();
