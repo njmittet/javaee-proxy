@@ -4,7 +4,7 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
-import javax.inject.Inject;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -12,12 +12,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.List;
-import org.jboss.logging.Logger;
 
 @Path("/proxy")
 public class ProxyController {
@@ -26,21 +26,16 @@ public class ProxyController {
     private static final String DEFAULT_HOST = "localhost";
     private static final String DEFAULT_PORT = "9000";
     private static final String CONTEXT_PATH = "/";
-    private static final String APPLICATION_XML = "application/xml";
-    private static final String APPLICATION_JSON = "application/json";
-
-    @Inject
-    private Logger logger;
 
     @GET
     @Path("/{path:.*}")
-    @Produces({"application/xml", "application/json"})
+    @Produces(MediaType.APPLICATION_XML)
     public Response proxy(@Context UriInfo uriInfo,
                           @HeaderParam("Accept") String acceptHeader) {
         ResteasyClient client = new ResteasyClientBuilder().build();
         ResteasyWebTarget target = client.target(buildUrl(uriInfo));
         Response response = target.request()
-                                  .accept(defaultAcceptHeader(acceptHeader))
+                                  .accept(acceptHeader)
                                   .get();
         return Response.status(response.getStatus())
                        .entity(response.readEntity(String.class))
@@ -49,7 +44,8 @@ public class ProxyController {
 
     @POST
     @Path("/{path:.*}")
-    @Produces({"application/xml", "application/json"})
+    @Produces(MediaType.APPLICATION_XML)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response proxy(@Context UriInfo uriInfo,
                           @HeaderParam("Accept") String acceptHeader,
                           @HeaderParam("Content-type") String contentType,
@@ -57,8 +53,8 @@ public class ProxyController {
         ResteasyClient client = new ResteasyClientBuilder().build();
         ResteasyWebTarget target = client.target(buildUrl(uriInfo));
         Response response = target.request()
-                                  .accept(defaultAcceptHeader(acceptHeader))
-                                  .post(Entity.entity(body, defaultContentType(contentType)));
+                                  .accept(acceptHeader)
+                                  .post(Entity.entity(body, contentType));
         return Response.status(response.getStatus())
                        .entity(response.readEntity(String.class))
                        .build();
@@ -111,20 +107,6 @@ public class ProxyController {
         List<String> keyValues = new ArrayList<>();
         values.forEach(value -> keyValues.add(key + "=" + value));
         return String.join("&", keyValues);
-    }
-
-    private String defaultAcceptHeader(String acceptHeader) {
-        if (acceptHeader.equals(APPLICATION_XML) || acceptHeader.equals(APPLICATION_JSON)) {
-            return acceptHeader;
-        }
-        return APPLICATION_XML;
-    }
-
-    private String defaultContentType(String contentType) {
-        if (contentType.equals(APPLICATION_XML) || contentType.equals(APPLICATION_JSON)) {
-            return contentType;
-        }
-        return APPLICATION_XML;
     }
 }
 
