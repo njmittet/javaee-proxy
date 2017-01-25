@@ -1,5 +1,6 @@
 package no.njm;
 
+import org.jboss.logging.Logger;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
@@ -22,10 +23,12 @@ import java.util.List;
 @Path("/proxy")
 public class ProxyController {
 
+    private static final Logger log = Logger.getLogger(ProxyController.class);
+
     private static final String PATH_IDENTIFIER = "path";
-    private static final String DEFAULT_HOST = "localhost";
-    private static final String DEFAULT_PORT = "9000";
-    private static final String CONTEXT_PATH = "/";
+    private static final String BACKEND_HOST = "localhost";
+    private static final String BACKEND_PORT = "8080";
+    private static final String BACKEND_PATH = "/";
 
     @GET
     @Path("/{path:.*}")
@@ -35,8 +38,8 @@ public class ProxyController {
         ResteasyClient client = new ResteasyClientBuilder().build();
         ResteasyWebTarget target = client.target(buildUrl(uriInfo));
         Response backendResponse = target.request()
-                                  .accept(acceptHeader)
-                                  .get();
+                                         .accept(acceptHeader)
+                                         .get();
         return createReponse(backendResponse);
     }
 
@@ -51,8 +54,8 @@ public class ProxyController {
         ResteasyClient client = new ResteasyClientBuilder().build();
         ResteasyWebTarget target = client.target(buildUrl(uriInfo));
         Response backendResponse = target.request()
-                                  .accept(acceptHeader)
-                                  .post(Entity.entity(body, contentType));
+                                         .accept(acceptHeader)
+                                         .post(Entity.entity(body, contentType));
         return createReponse(backendResponse);
     }
 
@@ -63,31 +66,41 @@ public class ProxyController {
     }
 
     private String buildUrl(UriInfo uriInfo) {
-        return new StringBuilder()
+        String url = new StringBuilder()
                 .append("http://")
-                .append(defaultHost())
+                .append(backendHost())
                 .append(":")
-                .append(defaultPort())
-                .append(CONTEXT_PATH)
+                .append(backendPort())
+                .append(backendPath())
                 .append(requestPath(uriInfo.getPathParameters()))
                 .append(queryParameters(uriInfo.getQueryParameters()))
                 .toString();
+        log.debug("Backend url: " + url);
+        return url;
     }
 
-    private String defaultHost() {
+    private String backendHost() {
         String host = System.getenv("PROXY_HOST");
         if (host != null && !host.isEmpty()) {
             return host;
         }
-        return DEFAULT_HOST;
+        return BACKEND_HOST;
     }
 
-    private String defaultPort() {
+    private String backendPath() {
+        String contextPath = System.getenv("CONTEXT_PATH");
+        if (contextPath != null && !contextPath.isEmpty()) {
+            return contextPath;
+        }
+        return BACKEND_PATH;
+    }
+
+    private String backendPort() {
         String port = System.getenv("PROXY_PORT");
         if (port != null && !port.isEmpty()) {
             return port;
         }
-        return DEFAULT_PORT;
+        return BACKEND_PORT;
     }
 
     private String requestPath(MultivaluedMap<String, String> pathParameters) {
