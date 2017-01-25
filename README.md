@@ -2,7 +2,7 @@ javaee-proxy
 ============
 
 Simple Java EE 7 HTTP reverse proxy application. Use the Dockerfile to
-create a Docker container running the applicaton in a [Wildfly 10.0.0.Final](http://wildfly.org/downloads/) instance.
+create a Docker container running the applicaton in a [Wildfly 10.1.0.Final](http://wildfly.org/downloads/) instance.
 
 Supported methods
 -----------------
